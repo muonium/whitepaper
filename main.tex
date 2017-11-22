@@ -156,7 +156,7 @@ Internal file sharing uses asymmetric encryption, thus, the user needs to genera
 keys if it has not been done before. Asymmetric keys aren't generated at the registration and
 are generated on 4096 bits.
 
-\textbf{Encryption.}
+\paragraph{Encryption.}
 
 The user types the username of the user they want to share the file with. If a match is found, then the
 shared-with user's public key $pubkey_u$ is downloaded to the client.
@@ -167,7 +167,7 @@ to a key derivation for rebuilding $FEK$ such as $FEK=KDF(CEK, salt, 7000, 256)$
 Once the $FEK$ obtained, we proceed to the encryption of it such as $FEK_c=AsymEnc(pubkey_u, FEK)$, then
 $FEK_c$ is sent to the server and is stored in the database.
 
-\textbf{Decryption.}
+\paragraph{Decryption.}
 
 The user click on "shared with me", downloads the file, and gets their private key $priv_u$.
 
