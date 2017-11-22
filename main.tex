@@ -19,7 +19,8 @@ DRAFT
 This paper aims to explain the technical side of \emph{Muonium}, a fully open source encrypted cloud storage.
 
 
-Muonium aims to protect users' online privacy through \emph{End-to-End Encryption} against malicious parties. Muonium automatically encrypts user's data, uploads and stores them on the cloud. Users can have access to their encrypted files anytime, anywhere.
+Muonium aims to protect users' online privacy through \emph{End-to-End Encryption} against malicious parties.
+Muonium automatically encrypts user's data, uploads and stores them on the cloud. Users can have access to their encrypted files anytime, anywhere.
 
 \section{Terms}
 In this section, we define all technical terms used throughout the paper.
@@ -33,9 +34,13 @@ In this section, we define all technical terms used throughout the paper.
         256-bit symmetric key derived from $CEK$. We use $FEK$ to encrypt/decrypt files. Each file has its own FEK.
     \item \textbf{Login Password $LP$}: Used for authentication procedures
     \item \textbf{Hash function}: We use SHA-384 at the client-side and Blowfish with 192-bit of Salt at the server-side.
-    \item \textbf{Key derivation function:} Every key derivation is performed with PBKDF2. We denote this process as $KDF(P)$ where $P$ is the user's passphrase.
+    \item \textbf{Key derivation function:} Every key derivation is performed with PBKDF2-HMAC-256. We denote this process as
+		$KDF(P,salt, iter, len)$ where $P$ is the user's passphrase, $salt$ is the 128-bit salt randomly generated, $iter$ is the
+		iteration number, and $len$ is the key length output.
     \item \textbf{Symmetric encryption}: We use AES-256 over GCM.
-        We denote this process as $Enc(k,x)$ where $k$ is a symmetric key and $x$ is the plain-text to be encrypted.
+        We denote this process as $Enc(k,pl, iv, AD)$ where $k$ is a symmetric key and $pl$ is the plain-text to be encrypted,
+				$iv$ is the 128-bit randomly generated initialization vector, and $AD$ is a 128-bit randomly generated word used as
+				authentication data.
     \item \textbf{Symmetric decryption}: We use AES-256 over GCM;
         We denote this process as $Dec(k, x)$ where $k$ is a symmetric key and $x$ is the encrypted text to be decrypted.
 		\item \textbf{Asymmetric encryption}: We use a 4096-bit public key, and is denoted as $AsymEnc(pubkey, content)$.
@@ -53,7 +58,9 @@ Users must register with a Muonium server in order to use its service. During th
     \item \textbf{Passphrase $P$}: Used in the cryptographic system.
 \end{itemize}
 
-The \emph{user name} and the user's \emph{email address} are stored in plain text in the database while the Login Password $LP$ is double-hashed a first time at the client-side under SHA-384 and a second time at the server-side under Blowfish (described in figure \ref{Fig:fig1}).
+The \emph{user name} and the user's \emph{email address} are stored in plain text in the database while the Login
+Password $LP$ is double-hashed a first time at the client-side under SHA-384 and a second time at the server-side
+under Blowfish (described in figure \ref{Fig:fig1}).
 
 \begin{figure}[!h]
 \centering
@@ -62,15 +69,15 @@ The \emph{user name} and the user's \emph{email address} are stored in plain tex
 \label{Fig:fig1}
 \end{figure}
 
-While the user submits his credentials, Muonium client generates a $CEK$, encrypts it with $P$ and sends along with the user's credentials to the server as follow.
-
-Explain Figure \ref{Fig:fig2}
+While the user submits his credentials, Muonium client generates a $CEK$, encrypts it with $P$ and sends along
+with the user's credentials to the server as follow. The connection between $Client$ and $Server$ is encrypted
+over AES-256-GCM with TLS 1.2 .
 
 \subsection{Connection}
-To use the service, an user must establish a connection with a Muonium server. There are two steps involved: \emph{Authentication} and \emph{$CEK$ decryption}.
+To use the service, a user must establish a connection with a Muonium server. There are two steps involved: \emph{Authentication} and \emph{$CEK$ decryption}.
 
 \subsubsection{Authentication}
-The user types in his credentials (user name/email address and $LP$) plus his passphrase $P$. Muonium server then verify these information.
+The user types in his credentials (user name/email address and $LP$) plus his passphrase $P$. Muonium server then verifies these credentials.
 
 \subsubsection{$CEK$ decryption}
 Once the user is authenticated, Muonium server return $Enc(P, CEK)$. It is then decrypted as $Dec(P, CEK)$. Client stores $CEK$ locally on ...
@@ -146,8 +153,8 @@ decrypted file.
 \subsubsection{Internal file sharing}
 
 Internal file sharing uses asymmetric encryption, thus, the user needs to generate their pair of
-keys if it has not been done before. Asymmetric keys aren't generated at the registration. Asymmetric
-keys are generated on 4096 bits.
+keys if it has not been done before. Asymmetric keys aren't generated at the registration and
+are generated on 4096 bits.
 
 \textbf{Encryption.}
 
@@ -176,7 +183,7 @@ Muonium is based on the end-to-end encryption model, consequently nobody can acc
 
 \begin{itemize}
 	\item \textbf{Key derivation algorithm}: it exists several improved key derivation
-	algorithms, but we've chosen to use PBKDF2 for its performances and safety.
+	algorithms, but we've chosen to use PBKDF2-HMAC-SHA256 for its performances and safety.
 	\item \textbf{FEK leaks}: when an external or internal user gets to be shared a file with,
 	they get to know $FEK$, which means that they would be able to leak it publicly. Hence,
 	it is recommended to re-upload the file once the user gets done to share it.
