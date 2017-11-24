@@ -133,16 +133,16 @@ that the user had to type to share it with external users (people who don't use 
 
 In order to encrypt $FEK$, an $IV$ and $AT$ are randomly generated on 128 bits.
 
-Then, the encryption is processed such as $FEK_c=Enc(DK, FEK, IV, AD, 128)$, where $FEK_c$ is the
+Then, the encryption is performed such as $FEK_c=Enc(DK, FEK, IV, AD, 128)$, where $FEK_c$ is the
 encrypted $FEK$. Once the $FEK$ got encrypted, the cryptographic parameters are encapsulated with
-$FEK_c$ such as $packet=(FEK_c||salt||IV||AD)$.
+$FEK_c$ such as $packet=(FEK_c||salt_d_k||IV||AD)$.
 
 \textbf{Decryption.}
 
 An external user goes to the public link, type the passphrase, and download the file.
 
 $packet$ is obtained from the database and sent to the external user. The user types the passphrase
-$p$. We extract $salt_d_k$ from $packet$ and proceed to a key derivation such as $DK=(p, salt, 7000, 256)$.
+$p$. We extract $salt_d_k$ from $packet$ and proceed to a key derivation such as $DK=(p, salt_d_k, 7000, 256)$.
 
 Once $DK$ obtained from the key derivation process, we extract $IV$ and $AD$ from $packet$ and proceed to
 the decryption of $FEK_c$ to get $FEK$ such as $FEK=Dec(DK, FEK_c, IV, AD)$.
