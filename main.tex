@@ -75,14 +75,15 @@ $CEK_c$, $IV$, $AD$, and $salt_k_e_k$ along with it as well.
 The connection between $Client$ and $Server$ is encrypted over AES-256-GCM with TLS 1.2.
 
 \subsection{Connection}
-To use the service, a user must establish a connection with a Muonium server. There are two steps involved: \emph{Authentication} and \emph{$CEK$ decryption}.
+To use the service, a user must establish a connection with a Muonium server.
+There are two steps involved: \emph{Authentication} and \emph{$CEK$ decryption}.
 
 \subsubsection{Authentication}
 The user types in his credentials (user name/email address and $LP$) plus his passphrase $P$. Muonium server then verifies these credentials.
 
 \subsubsection{$CEK$ decryption}
 
-Once the user is authenticated, the server returns $CEK_c$. From $CEK_c$ (Json format) is taken $salt_k_e_k$ in order to decrypt $CEK_c$.
+Once the user is authenticated, the server returns $packet_k$. From $CEK_c$ (Json format) is taken $salt_k_e_k$ in order to decrypt $CEK_c$.
 The client proceeds to a key derivation to recompute $KEK$, such as $KEK=KDF(P, salt_k_e_k, 7000, 256)$.
 
 The client then decrypts it such as $CEK=Dec(KEK, CEK_c, IV, AD)$ and stores $CEK$ and $KEK$ locally.
