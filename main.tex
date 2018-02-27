@@ -87,36 +87,46 @@ The client proceeds to a key derivation to recompute $KEK$, such as $KEK=KDF(P, 
 
 The client then decrypts it such as $CEK=Dec(KEK, CEK_c, IV, AD)$ and stores $CEK$ and $KEK$ locally.
 
-\subsection{Upload}
+\subsection{File Upload}
 \subsubsection{Key derivation}
-To proceed to a key derivation, a Salt is generated on 128 bits. We use a strengthening by a factor of 7000. The output will be a 256-bit symmetric key. Such as $FEK = KDF(CEK, Salt, 7000, 256)$ where 7000 (strengthening by factor) and 256 (symmetric key output size) are constants.
+In order to proceed to a key derivation, a salt ($salt_f_e_k$) is generated on 128 bits.
+We use a strengthening by a factor of 7000. The output will be a 256-bit symmetric key.
+Such as $FEK = KDF(CEK, salt_f_e_k, 7000, 256)$ where 7000 (strengthening by factor)
+and 256 (symmetric key output size) are constants.
 
 \subsubsection{Splitting}
-A file is split in 1Mo chunks. For each chunk are generated an initialization vector ($IV$) and authentication data  ($AD$), both are generated on 128 bits.
+A file is split in 512MiB chunks. For each chunk are generated an $IV$
+and $AD$, both are generated on 128 bits.
 
 \subsubsection{Encryption}
-For every chunk an encryption is performed with the $IV$ and $AD$ of the chunk itself and the $FEK$ of the file such as $Enc(FEK, Chunk, IV, AD, 128)$ where 128 is a constant which represent the tag length.
+For every chunk ($chk_x$) an encryption is performed with the $IV_x$ and $AD_x$ of the chunk
+itself and the $FEK$ of the file such as $encchk_x=Enc(FEK, chk_x, IV_x, AD_x, 128)$ where 128
+is a constant which represent the tag length.
 
 \subsubsection{Encapsulation}
-Every chunk is encapsulated with the AD and IV such as $chunk_packet=(AD||IV||encrypted_chunk)$.
+Every chunk is encapsulated with the AD and IV such as $pck=(encchk_x||salt_f_e_k||IV_x||AD_x)$.
 
 \subsubsection{Uploading process}
 Once encapsulated, the chunk is sent to the server. All chunks are sent one by one.
 
 
+\subsection{File Download}
 
-\subsection{Decryption}
 \subsubsection{Extraction}
-The first chunk of the remote file is downloaded. We extract the $IV$, $AD$, and Salt from it.
+The first chunk of the remote file is downloaded. We extract $salt_f_e_k$ from it.
 
 \subsubsection{Key derivation}
-The Salt is used to proceed to a key derivation, such as $KDF(CEK, Salt, 7000, 256)$, the output will be the $FEK$ of the file.
+The $salt_f_e_k$ is used to proceed to a key derivation, such as $FEK=KDF(CEK, salt_f_e_k, 7000, 256)$.
 
 \subsubsection{Decryption}
-The content of the first chunk ($DATA$) is decrypted with the extracted cryptographic parameters such as $Dec(FEK,DATA,IV,AD,128)$. The other chunks are decrypted with their own extracted cryptographic parameters and the same $FEK$ as the first chunk.
+
+For every received chunk, the client decrypts it such as: $chk_x=Dec(FEK, encchk_x, IV_x, AD_x, 128)$.
 
 \subsubsection{Reassembling}
 For each chunk belonging to the same file, it is written in a remote file.
+
+Such as $file=(chk_1,...,chk_y)$, where $y$ is the total number of chunks composing the remote file.
+
 \medskip
 
 \subsection{File sharing}
