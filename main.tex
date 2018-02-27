@@ -26,13 +26,8 @@ Muonium automatically encrypts user's data, uploads and stores them on the cloud
 In this section, we define all technical terms used throughout the paper.
 
 \begin{itemize}
-    \item \textbf{Content Encryption Key ($CEK$)}:
-        Alphanumeric UTF-8 randomly generated string. It is used in the Key derivation function.
-    \item \textbf{Passphrase ($P$)}:
-        User's defined alphanumeric UTF-8 passphrase during registration on the client side.
     \item \textbf{File Encryption Key (FEK)}:
         256-bit symmetric key derived from $CEK$. We use $FEK$ to encrypt/decrypt files. Each file has its own FEK.
-    \item \textbf{Login Password $LP$}: Used for authentication procedures
     \item \textbf{Hash function}: We use SHA-384 at the client-side and Blowfish with 192-bit of Salt at the server-side.
     \item \textbf{Key derivation function:} Every key derivation is performed with PBKDF2-HMAC-256. We denote this process as
 		$KDF(P,salt, iter, len)$ where $P$ is the user's passphrase, $salt$ is the 128-bit salt randomly generated, $iter$ is the
@@ -54,13 +49,21 @@ Users must register with a Muonium server in order to use its service. During th
 \begin{itemize}
     \item \textbf{Email address}: Used for authentication procedures.
     \item \textbf{User name}: Used as an email address alternative for authentication procedures.
-    \item \textbf{Login Password $LP$}:
-    \item \textbf{Passphrase $P$}: Used in the cryptographic system.
+    \item \textbf{Login Password $LP$}: used for authentication system.
+    \item \textbf{Passphrase $P$}:
+		User's defined alphanumeric UTF-8 passphrase during registration on the client side.
 \end{itemize}
 
 The \emph{user name} and the user's \emph{email address} are stored in plain text in the database while the Login
 Password $LP$ is double-hashed a first time at the client-side under SHA-384 and a second time at the server-side
 under Blowfish (described in figure \ref{Fig:fig1}).
+
+While the user submits his credentials, Muonium client generates a Content Encryption Key ($CEK$),
+which is an alphanumeric UTF-8 randomly generated string.
+Then, an initialization vector ($IV$), authentication data ($AD$), and salt ($salt_k_e_k$) are both generated on 128 bits.
+Once these cryptographic parameters generated, we derive the Key Encryption Key from $P$, such as: $KEK=KDF(P, salt_k_e_k, 7000, 256)$.
+Afterwards, $CEK$ is encrypted such as: $CEK_c=Enc(KEK, CEK, IV AD)$, and is sent to the server with the Json format, $packet_k$ containing
+$CEK_c$, $IV$, $AD$, and $salt_k_e_k$ along with it as well.
 
 \begin{figure}[!h]
 \centering
@@ -69,20 +72,22 @@ under Blowfish (described in figure \ref{Fig:fig1}).
 \label{Fig:fig1}
 \end{figure}
 
-While the user submits his credentials, Muonium client generates a $CEK$, encrypts it with $P$ and sends along
-with the user's credentials to the server as follow. The connection between $Client$ and $Server$ is encrypted
-over AES-256-GCM with TLS 1.2 .
+The connection between $Client$ and $Server$ is encrypted over AES-256-GCM with TLS 1.2.
 
 \subsection{Connection}
 To use the service, a user must establish a connection with a Muonium server. There are two steps involved: \emph{Authentication} and \emph{$CEK$ decryption}.
+
+// @TODO: talk about KEK storage
 
 \subsubsection{Authentication}
 The user types in his credentials (user name/email address and $LP$) plus his passphrase $P$. Muonium server then verifies these credentials.
 
 \subsubsection{$CEK$ decryption}
-Once the user is authenticated, Muonium server return $Enc(P, CEK)$. It is then decrypted as $Dec(P, CEK)$. Client stores $CEK$ locally on ...
 
-Diagram for both subsubsection
+Once the user is authenticated, the server returns $CEK_c$. From $CEK_c$ (Json format) is taken $salt_k_e_k$ in order to decrypt $CEK_c$.
+The client proceeds to a key derivation to recompute $KEK$, such as $KEK=KDF(P, salt_k_e_k, 7000, 256)$.
+
+The client then decrypts it such as $CEK=Dec(KEK, CEK_c, IV, AD)$ and stores $CEK$ and $KEK$ locally.
 
 \subsection{Upload}
 \subsubsection{Key derivation}
