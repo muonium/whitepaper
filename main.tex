@@ -190,6 +190,71 @@ The client gets $FEK_c$ from the database, and decrypts it such as $FEK=AsymDec(
 Once $FEK$ obtained, every chunk of the file is downloaded, decrypted, and reassembled to recreate the
 decrypted file.
 
+\subsubsection{Organizations Feature}
+
+\paragraph{Keys management.}
+
+Every sub-user that will be promoted as administrator (admin) later, will have to generate their
+pair of asymmetric keys. Hence, if the sub-user doesn't have their pair of asymmetric keys,
+the master won't be able to promote them as administrator.
+
+Asymmetric keys are generated such as $(PK_a, PK_b)=GenAsym(RSA, l)$,
+where $PK_a$ is the private key, $PK_b$ the public key, and $l$ is the length.
+
+The master of the organization is a normal user (not sub-user), and gets the
+key of the organization encrypted thanks to its $PKB_org$.
+
+We denote:
+
+\begin{itemize}
+	\item \textbf{CEK_u}: sub-user's CEK.
+	\item \textbf{A}: encrypted $CEK_u$ with $PKB_org$.
+	\item \textbf{B}: encrypted $CEK_u$ with $KEK_u$.
+\end{itemize}
+
+\paragraph{Creation of the sub-user.}
+
+The master creates the user with the following parameters:
+
+\begin{itemize}
+	\item \textbf{username}
+	\item \textbf{email} (optional)
+	\item \textbf{temporary password}
+\end{itemize}
+
+When the user logs in for the first time, they will have to generate a $CEK$,
+and define a passphrase $P$ in order to derivate it following the standard
+derivation key function as defined in the section \textbf{Terms} (as a normal
+user).
+
+\paragraph{Promoting a sub-user as administrator.}
+
+Every master may be able to either create or delete a user. A non-private
+sub-user cannot be promoted as admin. A sub-user without a pair of asymmetric
+keys won't be able to be promoted as admin.
+
+The admin gets the sub-user's $PKB_u$ and encrypts $PKA_org$ with it such as
+$PKA_orgenc=AsymEnc(PKB_u,PKA_org)$. Afterwards, $PKA_orgenc$ is stored on
+the server.
+
+\paragraph{Non-private sub-ser creation.}
+
+To begin with, the administrator randomly generates $CEK_u$, which is the CEK of the
+non-private sub-user, and pre-defines a passphrase $P$.
+
+We compute $KEK_u$ such as $KEK_u=KDF(P, S, 7000, 256)$, where $S$ is the salt,
+a randomly generated bit array on 128 bits. Afterwards, $CEK_u$ is encrypted such
+as $B=Enc(KEK_u,CEK_u, IV,AD)$. We send store it as a packet:
+$packet=(B||S||IV||AD)$. We encrypt it with $PKB_org$ such as
+$A=AsymEnc(PKB_org, CEK_u)$ and store it as well.
+
+\paragraph{administrator logs in as a non-private user.}
+
+Admin gets $PKA_org$, such as $PKA_org=AsymDec(PKA_u, PKA_orgenc)$. Once obtained,
+admin decrypts the non-private sub-user's CEK ($CEK_u$) such as
+$CEK_u=AsymDec(PKA_org, A$. Then, admin will be able to decrypt files
+from the non-private sub-user's storage space.
+
 \section{Conclusion}
 Muonium is based on the end-to-end encryption model, consequently nobody can access a user's data except the user himself.
 
