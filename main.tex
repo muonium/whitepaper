@@ -198,8 +198,8 @@ Every sub-user that will be promoted as administrator (admin) later, will have t
 pair of asymmetric keys. Hence, if the sub-user doesn't have their pair of asymmetric keys,
 the master won't be able to promote them as administrator.
 
-Asymmetric keys are generated such as $(PK_a, PK_b)=GenAsym(RSA, l)$,
-where $PK_a$ is the private key, $PK_b$ the public key, and $l$ is the length.
+Asymmetric keys are generated such as $(PKA_o, PKB_o)=GenAsym(RSA, l)$,
+where $PKA_o$ is the private key, $PKB_o$ the public key, and $l$ is the length.
 
 The master of the organization is a normal user (not sub-user), and gets the
 key of the organization encrypted thanks to its $PKB_o$.
