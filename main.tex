@@ -158,6 +158,22 @@ and 256 (symmetric key output size) are constants.
 A file is split in 512MiB chunks. For each chunk are generated an $IV$
 and $AD$, both are generated on 128 bits.
 
+\vspace{5mm}
+
+For instance, if we take a 600MiB file, we have got:
+
+\vspace{5mm}
+
+\begin{center}
+\begin{tabular}{ l | c | r }
+  \hline
+  id & chunk & size \\
+  0 & $chunk0$ & 512 \\
+  1 & $chunk1$ & 88 \\
+  \hline
+\end{tabular}
+\end{center}
+
 \subsubsection{Encryption}
 For every chunk ($chk_x$) an encryption is performed with the $IV_x$ and $AD_x$ of the chunk
 itself and the $FEK$ of the file such as $encchk_x=Enc(FEK, chk_x, IV_x, AD_x, 128)$ where 128
