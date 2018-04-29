@@ -40,8 +40,15 @@ In this section, we define all technical terms used throughout the paper.
 				authentication data.
     \item \textbf{Symmetric decryption}: We use AES-256 over GCM;
         We denote this process as $Dec(k, x)$ where $k$ is a symmetric key and $x$ is the encrypted text to be decrypted.
-		\item \textbf{Asymmetric encryption}: We use a 4096-bit public key, and is denoted as $AsymEnc(pubkey, content)$.
-		\item \textbf{Asymmetric decryption}: We use a 4096-bit private key, and is denoted as $AsymDec(privkey, content)$.
+	\item \textbf{Asymmetric encryption}: We use a 4096-bit public key, and is denoted as $AsymEnc(pubkey, content)$.
+	\item \textbf{Asymmetric decryption}: We use a 4096-bit private key, and is denoted as $AsymDec(privkey, content)$.
+	\item \textbf{Encapsulation}:
+	Often is this document, "packet" is mentioned, a packet is a UTF-8 string which may be represented this way:
+
+	\vspace{5mm}
+
+	$packet="\$var0"+":"+"\$var1"$, where $+$ represents the concatenation.
+
 \end{itemize}
 
 \section{Protocol}
@@ -316,11 +323,13 @@ non-private sub-user, and pre-defines a passphrase $P$.
 We compute $KEK_u$ such as $KEK_u=KDF(P, S, 7000, 256)$, where $S$ is the salt,
 a randomly generated bit array on 128 bits. Afterwards, $CEK_u$ is encrypted such as:
 $CEK_u_e=Enc(KEK_u, CEK_u, IV, AD)$. We then create a packet such as:
-$pck=(CEK_u_e, s, IV,AD)$, and store it.
+$pck=(CEK_u_e||s||IV||AD)$, and store it.
+
+\vspace{5mm}
 
 The administrator encrypts $CEK_u$ under $CEK_o$ such as:
 $CEK_u_e=Enc(CEK_o, CEK_u, IV,AD)$. We then create a packet such as:
-$pck=(CEK_u_e, s, IV,AD)$, and store it.
+$pck=(CEK_u_e||s||IV||AD)$, and store it.
 
 \subsubsection{Administrator logs in as a non-private user.}
 
