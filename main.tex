@@ -3,6 +3,8 @@ AD\documentclass[a4paper,10pt]{article}
 % Import packages here
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
 
 % Title
 \title{Muonium - Encrypted cloud storage}
@@ -56,7 +58,9 @@ Users must register with a Muonium server in order to use its service. During th
 
 The \emph{user name} and the user's \emph{email address} are stored in plain text in the database while the Login
 Password $LP$ is double-hashed a first time at the client-side under SHA-384 and a second time at the server-side
-under Blowfish (described in figure \ref{Fig:fig1}).
+under Blowfish.
+
+\vspace{5mm}
 
 While the user submits his credentials, Muonium client generates a Content Encryption Key ($CEK$),
 which is an alphanumeric UTF-8 randomly generated string.
@@ -65,12 +69,60 @@ Once these cryptographic parameters generated, we derive the Key Encryption Key 
 Afterwards, $CEK$ is encrypted such as: $CEK_c=Enc(KEK, CEK, IV AD)$, and is sent to the server with the Json format, $packet_k$ containing
 $CEK_c$, $IV$, $AD$, and $salt_k_e_k$ along with it as well.
 
-\begin{figure}[!h]
-\centering
-\includegraphics[width=0.8\textwidth]{diagram/figure1}
-\caption{$LP$ is hashed and stored on the server}
-\label{Fig:fig1}
-\end{figure}
+\vspace{5mm}
+
+$packet_k$ is a JSON document, such as:
+
+\colorlet{punct}{green!60!black}
+\definecolor{background}{HTML}{FFFFFF}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+\begin{document}
+
+\begin{lstlisting}[language=json,firstnumber=1]
+{
+	"iv": "IV"
+	"v" : 1,
+	"iter" : 7000,
+	"ks" : 256,
+	"ts" : 128,
+	"mode" : "gcm",
+	"adata" : "AD",
+	"cipher" : "aes",
+	"salt" : "saltFEK",
+	"ct" : "CEKc"
+}
+\end{lstlisting}
 
 The connection between $Client$ and $Server$ is encrypted over AES-256-GCM with TLS 1.2.
 
@@ -107,6 +159,13 @@ is a constant which represent the tag length.
 \subsubsection{Encapsulation}
 Every chunk is encapsulated with the AD and IV such as $pck=(encchk_x||salt_f_e_k||IV_x||AD_x)$.
 
+$pck$ is a UTF-8 string, we represent it such as:
+
+\vspace{5mm}
+
+$pck="\$encchk_x"+":"+"\$salt_f_e_k"+":"+"\$IV_x"+":"+"\$AD_x"$, where $\$x$ is a variable
+which represents a base64-encoded bit array.
+
 \subsubsection{Uploading process}
 Once encapsulated, the chunk is sent to the server. All chunks are sent one by one.
 
@@ -114,14 +173,29 @@ Once encapsulated, the chunk is sent to the server. All chunks are sent one by o
 \subsection{File Download}
 
 \subsubsection{Extraction}
-The first chunk of the remote file is downloaded. We extract $salt_f_e_k$ from it.
+The first chunk of the remote file is downloaded. We extract the cryptographic parameters
+into a table, such as:
+
+\begin{center}
+  \begin{tabular}{ l | c}
+    \hline
+    id & content \\ \hline
+    0 & $encchk_x$ \\ \hline
+    1 & $salt_f_e_k$ \\ \hline
+	2 & $IV_x$ \\ \hline
+	3 & $AD_x$ \\
+    \hline
+  \end{tabular}
+\end{center}
 
 \subsubsection{Key derivation}
-The $salt_f_e_k$ is used to proceed to a key derivation, such as $FEK=KDF(CEK, salt_f_e_k, 7000, 256)$.
+The $salt_f_e_k$ is used to proceed to a key derivation, such as $FEK=KDF(CEK, salt_f_e_k, 7000, 256)$,
+where $salt_f_e_k$ is base64-decoded before getting used for the computation.
 
 \subsubsection{Decryption}
 
-For every received chunk, the client decrypts it such as: $chk_x=Dec(FEK, encchk_x, IV_x, AD_x, 128)$.
+For every received chunk, the client decrypts it such as: $chk_x=Dec(FEK, encchk_x, IV_x, AD_x, 128)$,
+where $encchk_x$, $IV_x$, and $AD_x$ are base64-decoded before getting used for the computation.
 
 \subsubsection{Reassembling}
 For each chunk belonging to the same file, it is written in a remote file.
@@ -190,9 +264,9 @@ The client gets $FEK_c$ from the database, and decrypts it such as $FEK=AsymDec(
 Once $FEK$ obtained, every chunk of the file is downloaded, decrypted, and reassembled to recreate the
 decrypted file.
 
-\subsubsection{Organizations Feature}
+\subsection{Organizations Feature}
 
-\paragraph{Keys management.}
+\subsubsection{Keys management.}
 
 When an organization is created, two keys are created.
 First, $CEK_o$ is randomly generated. Next, $KEK_o$ is derived
@@ -207,7 +281,7 @@ Later, $s$ will be used for the key derivation process of $KEK_o$.
 
 \vspace{5mm}
 
-\paragraph{Creation of a private sub-user.}
+\subsubsection{Creation of a private sub-user.}
 
 The master creates the user with the following parameters:
 
@@ -222,7 +296,7 @@ and define a passphrase $P$ in order to derivate it following the standard
 derivation key function as defined in the section \textbf{Terms} (as a normal
 user).
 
-\paragraph{Promoting a sub-user as administrator.}
+\subsubsection{Promoting a sub-user as administrator.}
 
 Every master may be able to either create or delete a user. A non-private
 sub-user cannot be promoted as admin.
@@ -232,7 +306,7 @@ sub-user cannot be promoted as admin.
 The sub-user is given $P_o$ (through any secure system such as encrypted emails),
 and is given all the privileges of an administrator.
 
-\paragraph{Creation of a non-private sub-user.}
+\subsubsection{Creation of a non-private sub-user.}
 
 To begin with, the administrator randomly generates $CEK_u$, which is the CEK of the
 non-private sub-user, and pre-defines a passphrase $P$.
@@ -248,7 +322,7 @@ The administrator encrypts $CEK_u$ under $CEK_o$ such as:
 $CEK_u_e=Enc(CEK_o, CEK_u, IV,AD)$. We then create a packet such as:
 $pck=(CEK_u_e, s, IV,AD)$, and store it.
 
-\paragraph{Administrator logs in as a non-private user.}
+\subsubsection{Administrator logs in as a non-private user.}
 
 First of all, admin gets $CEK_o$ and decrypts $CEK_u_e$. Along with $CEK_u$,
 admin will be able to decrypt the sub-user's files.
