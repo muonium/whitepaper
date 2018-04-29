@@ -194,7 +194,7 @@ decrypted file.
 
 \paragraph{Keys management.}
 
-When an organization is created, two keys are created as well.
+When an organization is created, two keys are created.
 First, $CEK_o$ is randomly generated. Next, $KEK_o$ is derived
 from $P_o$ (UTF-8 string), a passphrase. We denote this process such as:
 $KEK_o=KDF(P_o,s,7000,256)$, where $s$ is a 128-bit array.
@@ -203,6 +203,7 @@ Then, $CEK_o$ is encrypted under $KEK_o$ such as:
 $CEK_o_e=Enc(KEK_o, CEK_o, IV,AD)$.
 
 Finally, we create a packet such as $pck=(CEK_o_e, s, IV,AD)$ and store it remotely.
+Later, $s$ will be used for the key derivation process of $KEK_o$.
 
 \vspace{5mm}
 
@@ -231,7 +232,7 @@ sub-user cannot be promoted as admin.
 The sub-user is given $P_o$ (through any secure system such as encrypted emails),
 and is given all the privileges of an administrator.
 
-\paragraph{Creation of a private sub-user.}
+\paragraph{Creation of a non-private sub-user.}
 
 To begin with, the administrator randomly generates $CEK_u$, which is the CEK of the
 non-private sub-user, and pre-defines a passphrase $P$.
